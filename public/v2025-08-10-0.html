@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Solarnih Panela</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .visualization-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .roof-wrapper {
+            position: relative;
+            background: #f5f5f5;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #roofVisualization {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 3px solid #654321;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .panel {
+            position: absolute;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: 1px solid #0a2351;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .panel:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+            background: linear-gradient(135deg, #2a5298 0%, #3a62a8 100%);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .panel::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 10%;
+            bottom: 10%;
+            width: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .dimensions-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .dimension-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dimension-badge::before {
+            content: '📐';
+        }
+
+        .scale-info {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Kalkulator Solarnih Panela</h1>
+        <p class="subtitle">Optimalna konfiguracija za vaš krov - Vizualizacija povećana 4x za bolje prikazivanje margina</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="roofWidth">Širina krova (m):</label>
+                <input type="number" id="roofWidth" value="12" min="1" max="50" step="0.1">
+            </div>
+            <div class="control-group">
+                <label for="roofLength">Duljina krova (m):</label>
+                <input type="number" id="roofLength" value="9" min="1" max="50" step="0.1">
+            </div>
+            <div class="control-group">
+                <label for="orientation">Orijentacija panela:</label>
+                <select id="orientation">
+                    <option value="vertical">Vertikalno</option>
+                    <option value="horizontal">Horizontalno</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="panelPower">Snaga panela (Wp):</label>
+                <input type="number" id="panelPower" value="450" min="100" max="1000" step="10">
+            </div>
+            <div class="control-group">
+                <label for="safetyMargins">Sigurnosni razmaci:</label>
+                <select id="safetyMargins">
+                    <option value="recommended">Preporučeni (1.0m rubovi) - 32 panela</option>
+                    <option value="minimal">Minimalni (0.5m rubovi) - 36 panela</option>
+                    <option value="false">Bez margina - 50 panela</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="panelSpacing">Razmak između panela (mm):</label>
+                <input type="number" id="panelSpacing" value="30" min="0" max="100" step="5">
+            </div>
+            <div class="control-group">
+                <label for="showDetails">Prikaži detalje:</label>
+                <select id="showDetails">
+                    <option value="true">Da (dimenzije i mjerenja)</option>
+                    <option value="false">Ne (samo paneli)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="visualization-container">
+            <div class="roof-wrapper">
+                <canvas id="roofVisualization"></canvas>
+                <p class="scale-info">Kliknite na panel za detalje | Skala: 1:25 | Povećana vizualizacija za bolje prikazivanje margina</p>
+            </div>
+        </div>
+
+        <div class="dimensions-info">
+            <div class="dimension-badge">Panel: 1762 × 1134 mm</div>
+            <div class="dimension-badge">Krov: <span id="roofDimensions">12 × 9 m</span></div>
+            <div class="dimension-badge" style="background: #e8f5e9; color: #2e7d32;">
+                ✅ Optimalno: 32 panela (8×4)
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="panelCount">50</div>
+                <div class="stat-label">Broj panela</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPower">22.5 kWp</div>
+                <div class="stat-label">Ukupna snaga</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="coverage">92.5%</div>
+                <div class="stat-label">Iskorištenje površine</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="yearlyProduction">~27,000 kWh</div>
+                <div class="stat-label">Godišnja proizvodnja*</div>
+            </div>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #ffc107;">
+            <h3 style="color: #856404; margin-bottom: 15px;">⚠️ Sigurnosne napomene prema EN standardima:</h3>
+            <ul style="color: #856404; line-height: 1.8;">
+                <li><strong>Razmak između panela:</strong> 20-30mm horizontalno, 20-40mm vertikalno (termička ekspanzija)</li>
+                <li><strong>Udaljenost od rubova krova:</strong> min. 0.5m, preporučeno 1.0m (zona vjetrovnog opterećenja)</li>
+                <li><strong>Udaljenost od sljemena:</strong> min. 0.3m, preporučeno 0.5m</li>
+                <li><strong>Udaljenost od žlijeba:</strong> min. 0.3-0.5m (održavanje i odvod vode)</li>
+                <li><strong>Udaljenost od gromobrana:</strong> min. 0.5-1.0m (HRN EN 62305 standard)</li>
+                <li><strong>Montaža na crijep:</strong> Koriste se krovne kuke ili nosači prilagođeni tipu crijepa</li>
+            </ul>
+            <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #0c5460;">
+                <h4 style="color: #0c5460; margin-bottom: 10px;">📊 Opcije rasporeda sa vertikalnim postavljanjem:</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div style="background: white; padding: 10px; border-radius: 5px; border: 2px solid #2e7d32;">
+                        <strong style="color: #2e7d32;">✅ PREPORUČENO</strong><br>
+                        <span style="color: #0c5460;">
+                            • Margine: 1.0m rubovi<br>
+                            • <strong>32 panela (8×4)</strong><br>
+                            • 14.4 kWp<br>
+                            • ~19,200 kWh/god
+                        </span>
+                    </div>
+                    
+                    <div style="background: white; padding: 10px; border-radius: 5px; border: 2px solid #ff9800;">
+                        <strong style="color: #ff9800;">⚠️ MINIMALNO</strong><br>
+                        <span style="color: #0c5460;">
+                            • Margine: 0.5m rubovi<br>
+                            • <strong>36 panela (9×4)</strong><br>
+                            • 16.2 kWp<br>
+                            • ~21,600 kWh/god
+                        </span>
+                    </div>
+                    
+                    <div style="background: white; padding: 10px; border-radius: 5px; border: 2px solid #1976d2;">
+                        <strong style="color: #1976d2;">⚡ MAKSIMALNO</strong><br>
+                        <span style="color: #0c5460;">
+                            • Bez margina<br>
+                            • <strong>50 panela (10×5)</strong><br>
+                            • 22.5 kWp<br>
+                            • ~27,000 kWh/god
+                        </span>
+                    </div>
+                </div>
+                
+                <p style="color: #0c5460; margin-top: 15px; font-weight: bold;">
+                    ✅ ODGOVOR: DA, možete postaviti 36 panela (9×4) sa minimalnim EN marginama!
+                </p>
+                <p style="color: #856404; margin: 5px 0; font-size: 0.9rem;">
+                    <strong>Napomena:</strong> Minimalne margine (0.5m) zadovoljavaju EN standard, ali preporučene margine (1.0m) 
+                    pružaju bolju zaštitu od vjetra i lakše održavanje. Provjerite lokalne propise!
+                </p>
+            </div>
+        </div>
+        
+        <p style="text-align: center; color: #666; margin-top: 20px; font-size: 0.9rem;">
+            * Procjena godišnje proizvodnje bazirana na 1200 sunčanih sati godišnje u Hrvatskoj
+        </p>
+    </div>
+
+    <script>
+        // Configuration constants
+        const PANEL_WIDTH_MM = 1762;
+        const PANEL_HEIGHT_MM = 1134;
+        const SCALE = 40; // Increased from 10 to 40 for better visibility
+        
+        // Safety margins according to EN standards (in mm)
+        const SAFETY_MARGINS = {
+            fromEdge: 1000,      // 1m from roof edges
+            fromRidge: 500,      // 0.5m from ridge
+            fromGutter: 500,     // 0.5m from gutter
+            lightningRod: 1000   // 1m from lightning rod
+        };
+        
+        // State management
+        let state = {
+            roofWidth: 12,
+            roofLength: 9,
+            orientation: 'vertical',
+            panelPower: 450,
+            useSafetyMargins: 'recommended',
+            panelSpacing: 30,
+            showDetails: true,
+            panels: [],
+            safeZone: null
+        };
+
+        // DOM elements
+        const canvas = document.getElementById('roofVisualization');
+        const ctx = canvas.getContext('2d');
+        const roofWidthInput = document.getElementById('roofWidth');
+        const roofLengthInput = document.getElementById('roofLength');
+        const orientationSelect = document.getElementById('orientation');
+        const panelPowerInput = document.getElementById('panelPower');
+        const safetyMarginsSelect = document.getElementById('safetyMargins');
+        const panelSpacingInput = document.getElementById('panelSpacing');
+        const showDetailsSelect = document.getElementById('showDetails');
+
+        // Calculate panel layout
+        function calculatePanelLayout() {
+            const roofWidthMm = state.roofWidth * 1000;
+            const roofLengthMm = state.roofLength * 1000;
+            
+            let availableWidth = roofWidthMm;
+            let availableLength = roofLengthMm;
+            let offsetX = 0;
+            let offsetY = 0;
+            
+            // Apply safety margins based on selection
+            if (state.useSafetyMargins === 'recommended') {
+                // Recommended margins - 1m from edges
+                availableWidth -= 2 * 1000;  // 1m each side
+                offsetX = 1000;
+                availableLength -= (500 + 500);  // 0.5m ridge + 0.5m gutter
+                offsetY = 500;
+                
+                state.safeZone = {
+                    x: offsetX,
+                    y: offsetY,
+                    width: availableWidth,
+                    height: availableLength,
+                    type: 'recommended'
+                };
+            } else if (state.useSafetyMargins === 'minimal') {
+                // Minimal EN compliant margins - 0.5m from edges
+                availableWidth -= 2 * 500;  // 0.5m each side
+                offsetX = 500;
+                availableLength -= (500 + 500);  // 0.5m ridge + 0.5m gutter
+                offsetY = 500;
+                
+                state.safeZone = {
+                    x: offsetX,
+                    y: offsetY,
+                    width: availableWidth,
+                    height: availableLength,
+                    type: 'minimal'
+                };
+            } else {
+                // No safety margins
+                state.safeZone = null;
+            }
+            
+            let panelWidthMm, panelHeightMm;
+            if (state.orientation === 'vertical') {
+                panelWidthMm = PANEL_HEIGHT_MM;
+                panelHeightMm = PANEL_WIDTH_MM;
+            } else {
+                panelWidthMm = PANEL_WIDTH_MM;
+                panelHeightMm = PANEL_HEIGHT_MM;
+            }
+            
+            // Include spacing in calculations
+            const effectivePanelWidth = panelWidthMm + state.panelSpacing;
+            const effectivePanelHeight = panelHeightMm + state.panelSpacing;
+            
+            const panelsPerRow = Math.floor((availableWidth + state.panelSpacing) / effectivePanelWidth);
+            const panelsPerColumn = Math.floor((availableLength + state.panelSpacing) / effectivePanelHeight);
+            
+            // Calculate spacing for centered layout within safe zone
+            const totalPanelsWidth = panelsPerRow * effectivePanelWidth - state.panelSpacing;
+            const totalPanelsHeight = panelsPerColumn * effectivePanelHeight - state.panelSpacing;
+            const horizontalSpacing = (availableWidth - totalPanelsWidth) / 2;
+            const verticalSpacing = (availableLength - totalPanelsHeight) / 2;
+            
+            state.panels = [];
+            for (let row = 0; row < panelsPerColumn; row++) {
+                for (let col = 0; col < panelsPerRow; col++) {
+                    state.panels.push({
+                        x: offsetX + horizontalSpacing + col * effectivePanelWidth,
+                        y: offsetY + verticalSpacing + row * effectivePanelHeight,
+                        width: panelWidthMm,
+                        height: panelHeightMm,
+                        id: row * panelsPerRow + col + 1
+                    });
+                }
+            }
+            
+            return {
+                count: state.panels.length,
+                coverage: (state.panels.length * (PANEL_WIDTH_MM * PANEL_HEIGHT_MM) / 
+                          (roofWidthMm * roofLengthMm) * 100).toFixed(1),
+                effectiveArea: ((availableWidth * availableLength) / 1000000).toFixed(1),
+                panelsPerRow: panelsPerRow,
+                panelsPerColumn: panelsPerColumn
+            };
+        }
+
+        // Draw visualization
+        function drawVisualization() {
+            // Set canvas size
+            canvas.width = state.roofWidth * SCALE;
+            canvas.height = state.roofLength * SCALE;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw roof background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#8B4513');
+            gradient.addColorStop(1, '#A0522D');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw roof texture lines
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.height; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw safety zones if enabled
+            if (state.safeZone && state.showDetails) {
+                // Draw danger zones (margins) with pattern
+                ctx.fillStyle = state.safeZone.type === 'minimal' ? 
+                    'rgba(255, 165, 0, 0.25)' : 'rgba(255, 0, 0, 0.25)';
+                ctx.strokeStyle = state.safeZone.type === 'minimal' ? 
+                    'rgba(255, 165, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([10, 5]);
+                
+                // Top margin (ridge + lightning rod)
+                const topMargin = (state.safeZone.y / 1000) * SCALE;
+                ctx.fillRect(0, 0, canvas.width, topMargin);
+                ctx.strokeRect(0, 0, canvas.width, topMargin);
+                
+                // Bottom margin (gutter)
+                const bottomMargin = (500 / 1000) * SCALE;
+                ctx.fillRect(0, canvas.height - bottomMargin, canvas.width, bottomMargin);
+                ctx.strokeRect(0, canvas.height - bottomMargin, canvas.width, bottomMargin);
+                
+                // Left margin
+                const sideMargin = (state.safeZone.x / 1000) * SCALE;
+                ctx.fillRect(0, 0, sideMargin, canvas.height);
+                ctx.strokeRect(0, 0, sideMargin, canvas.height);
+                
+                // Right margin
+                ctx.fillRect(canvas.width - sideMargin, 0, sideMargin, canvas.height);
+                ctx.strokeRect(canvas.width - sideMargin, 0, sideMargin, canvas.height);
+                
+                // Draw safe zone border
+                ctx.strokeStyle = state.safeZone.type === 'minimal' ? '#ffa500' : '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 5]);
+                ctx.strokeRect(
+                    (state.safeZone.x / 1000) * SCALE,
+                    (state.safeZone.y / 1000) * SCALE,
+                    (state.safeZone.width / 1000) * SCALE,
+                    (state.safeZone.height / 1000) * SCALE
+                );
+                ctx.setLineDash([]);
+                
+                // Draw dimension lines and measurements
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const marginText = state.safeZone.type === 'minimal' ? '0.5m' : '1.0m';
+                const marginLabel = state.safeZone.type === 'minimal' ? 
+                    ' (MINIMALNO)' : ' (PREPORUČENO)';
+                
+                // Top margin dimension
+                drawDimensionLine(ctx, canvas.width / 2 - 100, 0, canvas.width / 2 - 100, topMargin, '0.5m');
+                ctx.fillText('GROMOBRAN / SLJEME', canvas.width / 2, topMargin / 2);
+                
+                // Bottom margin dimension
+                drawDimensionLine(ctx, canvas.width / 2 + 100, canvas.height - bottomMargin, 
+                                canvas.width / 2 + 100, canvas.height, '0.5m');
+                ctx.fillText('ŽLIJEB', canvas.width / 2, canvas.height - bottomMargin / 2);
+                
+                // Left margin dimension
+                drawDimensionLine(ctx, 0, canvas.height / 2 - 50, sideMargin, canvas.height / 2 - 50, marginText);
+                
+                // Right margin dimension
+                drawDimensionLine(ctx, canvas.width - sideMargin, canvas.height / 2 + 50, 
+                                canvas.width, canvas.height / 2 + 50, marginText);
+                
+                // Side labels
+                ctx.save();
+                ctx.translate(sideMargin / 2, canvas.height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('RUB KROVA' + marginLabel, 0, 0);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.translate(canvas.width - sideMargin / 2, canvas.height / 2);
+                ctx.rotate(Math.PI / 2);
+                ctx.fillText('RUB KROVA' + marginLabel, 0, 0);
+                ctx.restore();
+                
+                // Display effective area and configuration
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`Efektivna površina: ${state.safeZone.width/1000}m × ${state.safeZone.height/1000}m`, 
+                           canvas.width / 2, canvas.height - 40);
+                
+                const cols = Math.floor((state.safeZone.width + state.panelSpacing) / 
+                                      ((state.orientation === 'vertical' ? PANEL_HEIGHT_MM : PANEL_WIDTH_MM) + state.panelSpacing));
+                const rows = Math.floor((state.safeZone.height + state.panelSpacing) / 
+                                      ((state.orientation === 'vertical' ? PANEL_WIDTH_MM : PANEL_HEIGHT_MM) + state.panelSpacing));
+                ctx.fillText(`Konfiguracija: ${cols} stupaca × ${rows} redova = ${cols * rows} panela`, 
+                           canvas.width / 2, canvas.height - 20);
+                
+                // Add warning for minimal margins
+                if (state.safeZone.type === 'minimal') {
+                    ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText('⚠️ MINIMALNE MARGINE - Provjerite lokalne propise!', 
+                               canvas.width / 2, 30);
+                }
+            }
+            
+            // Draw panels with enhanced visibility
+            state.panels.forEach((panel, index) => {
+                const x = (panel.x / 1000) * SCALE;
+                const y = (panel.y / 1000) * SCALE;
+                const width = (panel.width / 1000) * SCALE;
+                const height = (panel.height / 1000) * SCALE;
+                
+                // Panel shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(x + 2, y + 2, width, height);
+                
+                // Panel gradient
+                const panelGradient = ctx.createLinearGradient(x, y, x + width, y + height);
+                panelGradient.addColorStop(0, '#2e5090');
+                panelGradient.addColorStop(0.5, '#1e3c72');
+                panelGradient.addColorStop(1, '#0a2351');
+                ctx.fillStyle = panelGradient;
+                ctx.fillRect(x, y, width, height);
+                
+                // Panel border
+                ctx.strokeStyle = '#001a33';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, width, height);
+                
+                // Panel grid (solar cell lines)
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                
+                // Draw multiple cell lines for realism
+                const cellRows = 6;
+                const cellCols = 10;
+                
+                for (let i = 1; i < cellRows; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + (height * i / cellRows));
+                    ctx.lineTo(x + width, y + (height * i / cellRows));
+                    ctx.stroke();
+                }
+                
+                for (let i = 1; i < cellCols; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + (width * i / cellCols), y);
+                    ctx.lineTo(x + (width * i / cellCols), y + height);
+                    ctx.stroke();
+                }
+                
+                // Panel number
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(panel.id, x + width / 2, y + height / 2);
+            });
+            
+            // Draw spacing indicators between panels if spacing is significant
+            if (state.panelSpacing >= 20 && state.panels.length > 1 && state.showDetails) {
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                
+                // Show spacing between first two panels
+                if (state.panels.length > 1) {
+                    const p1 = state.panels[0];
+                    const p2 = state.panels[1];
+                    
+                    if (Math.abs(p1.y - p2.y) < 10) { // Same row
+                        const x1 = ((p1.x + p1.width) / 1000) * SCALE;
+                        const x2 = (p2.x / 1000) * SCALE;
+                        const y = ((p1.y + p1.height / 2) / 1000) * SCALE;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y);
+                        ctx.lineTo(x2, y);
+                        ctx.stroke();
+                        
+                        ctx.fillStyle = 'yellow';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(`${state.panelSpacing}mm`, (x1 + x2) / 2, y - 10);
+                    }
+                }
+                ctx.setLineDash([]);
+            }
+        }
+        
+        // Helper function to draw dimension lines
+        function drawDimensionLine(ctx, x1, y1, x2, y2, text) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            
+            // Draw main line
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            
+            // Draw end caps
+            const capSize = 10;
+            if (Math.abs(x2 - x1) > Math.abs(y2 - y1)) { // Horizontal
+                ctx.beginPath();
+                ctx.moveTo(x1, y1 - capSize/2);
+                ctx.lineTo(x1, y1 + capSize/2);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x2, y2 - capSize/2);
+                ctx.lineTo(x2, y2 + capSize/2);
+                ctx.stroke();
+                
+                // Draw text
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, (x1 + x2) / 2, y1 - 15);
+            } else { // Vertical
+                ctx.beginPath();
+                ctx.moveTo(x1 - capSize/2, y1);
+                ctx.lineTo(x1 + capSize/2, y1);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x2 - capSize/2, y2);
+                ctx.lineTo(x2 + capSize/2, y2);
+                ctx.stroke();
+                
+                // Draw text
+                ctx.save();
+                ctx.translate(x1 - 15, (y1 + y2) / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        // Update statistics display
+        function updateStats() {
+            const layout = calculatePanelLayout();
+            const totalPower = (layout.count * state.panelPower / 1000).toFixed(1);
+            const yearlyProduction = (layout.count * state.panelPower * 1200 / 1000).toFixed(0);
+            
+            document.getElementById('panelCount').textContent = layout.count;
+            document.getElementById('totalPower').textContent = `${totalPower} kWp`;
+            document.getElementById('coverage').textContent = `${layout.coverage}%`;
+            document.getElementById('yearlyProduction').textContent = 
+                `~${parseInt(yearlyProduction).toLocaleString()} kWh`;
+            document.getElementById('roofDimensions').textContent = 
+                `${state.roofWidth} × ${state.roofLength} m`;
+            
+            // Update optimal configuration badge
+            const optimalBadge = document.querySelector('.dimension-badge:last-child');
+            if (optimalBadge) {
+                if (state.useSafetyMargins === 'recommended') {
+                    optimalBadge.innerHTML = `✅ Preporučeno EN: ${layout.count} panela (${layout.panelsPerRow}×${layout.panelsPerColumn})`;
+                    optimalBadge.style.background = '#e8f5e9';
+                    optimalBadge.style.color = '#2e7d32';
+                } else if (state.useSafetyMargins === 'minimal') {
+                    optimalBadge.innerHTML = `⚠️ Minimalno EN: ${layout.count} panela (${layout.panelsPerRow}×${layout.panelsPerColumn})`;
+                    optimalBadge.style.background = '#fff3cd';
+                    optimalBadge.style.color = '#856404';
+                } else {
+                    optimalBadge.innerHTML = `⚡ Maksimalno: ${layout.count} panela`;
+                    optimalBadge.style.background = '#e3f2fd';
+                    optimalBadge.style.color = '#1976d2';
+                }
+            }
+        }
+
+        // Handle input changes
+        function handleInputChange() {
+            state.roofWidth = parseFloat(roofWidthInput.value) || 12;
+            state.roofLength = parseFloat(roofLengthInput.value) || 9;
+            state.orientation = orientationSelect.value;
+            state.panelPower = parseInt(panelPowerInput.value) || 450;
+            state.useSafetyMargins = safetyMarginsSelect.value;
+            state.panelSpacing = parseInt(panelSpacingInput.value) || 30;
+            state.showDetails = showDetailsSelect ? showDetailsSelect.value === 'true' : true;
+            
+            updateStats();
+            drawVisualization();
+        }
+
+        // Handle canvas click for panel details
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * 1000 / SCALE;
+            const y = (e.clientY - rect.top) * 1000 / SCALE;
+            
+            const clickedPanel = state.panels.find(panel => 
+                x >= panel.x && x <= panel.x + panel.width &&
+                y >= panel.y && y <= panel.y + panel.height
+            );
+            
+            if (clickedPanel) {
+                alert(`Panel #${clickedPanel.id}\n` +
+                      `Snaga: ${state.panelPower} Wp\n` +
+                      `Dimenzije: ${PANEL_WIDTH_MM} × ${PANEL_HEIGHT_MM} mm\n` +
+                      `Godišnja proizvodnja: ~${(state.panelPower * 1200 / 1000).toFixed(0)} kWh`);
+            }
+        });
+
+        // Event listeners
+        roofWidthInput.addEventListener('input', handleInputChange);
+        roofLengthInput.addEventListener('input', handleInputChange);
+        orientationSelect.addEventListener('change', handleInputChange);
+        panelPowerInput.addEventListener('input', handleInputChange);
+        safetyMarginsSelect.addEventListener('change', handleInputChange);
+        panelSpacingInput.addEventListener('input', handleInputChange);
+        if (showDetailsSelect) {
+            showDetailsSelect.addEventListener('change', handleInputChange);
+        }
+
+        // Initial render
+        handleInputChange();
+    </script>
+</body>
+</html>
